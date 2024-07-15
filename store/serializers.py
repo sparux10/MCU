@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Product, Color, Size, Category, ColorSize
+from .models import *
 
 class ColorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -14,42 +14,40 @@ class SizeSerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['id', 'name', 'description', 'categoury_img', 'created_at', 'user']
+        fields = ['id', 'name', 'description', 'category_img', 'created_at', 'user']
 
-
-class ColorSizeSerializer(serializers.ModelSerializer):
-    color = ColorSerializer()
-    size = SizeSerializer()
+class ProductColorSizeSerializer(serializers.ModelSerializer):
+    color_id = serializers.PrimaryKeyRelatedField(queryset=Color.objects.all(), source='color')
+    size_id = serializers.PrimaryKeyRelatedField(queryset=Size.objects.all(), source='size')
+    color_name = serializers.CharField(source='color.color_name', read_only=True)
+    size_name = serializers.CharField(source='size.size_name', read_only=True)
 
     class Meta:
-        model = ColorSize
-        fields = ['id', 'color', 'size']
+        model = ProductColorSize
+        fields = ['id','color_id', 'color_name', 'size_id','size_name']
+
+
 
 class ProductSerializer(serializers.ModelSerializer):
-    color_sizes = ColorSizeSerializer(many=True, required=False)
+    product_colors_sizes = ProductColorSizeSerializer(many=True, required=False)
 
     class Meta:
         model = Product
-        fields = ['id', 'name', 'description', 'price', 'discount', 'brand', 'ratings', 'stock', 'product_img', 'category', 'created_at', 'user', 'color_sizes']
+        fields = ['id', 'name', 'description', 'price', 'discount', 'brand', 'ratings', 'stock', 'product_img', 'category', 'created_at', 'user', 'product_colors_sizes']
 
     def create(self, validated_data):
-        color_sizes_data = validated_data.pop('color_sizes', [])
+        product_colors_sizes_data = validated_data.pop('product_colors_sizes', [])
         product = Product.objects.create(**validated_data)
 
-        for color_size_data in color_sizes_data:
-            color_data = color_size_data['color']
-            size_data = color_size_data['size']
-
-            color, created = Color.objects.get_or_create(**color_data)
-            size, created = Size.objects.get_or_create(**size_data)
-
-            color_size, created = ColorSize.objects.get_or_create(color=color, size=size)
-            product.color_sizes.add(color_size)
+        for color_size_data in product_colors_sizes_data:
+            color = color_size_data['color']
+            size = color_size_data['size']
+            ProductColorSize.objects.create(product=product, color=color, size=size)
 
         return product
 
     def update(self, instance, validated_data):
-        color_sizes_data = validated_data.pop('color_sizes', [])
+        product_colors_sizes_data = validated_data.pop('product_colors_sizes', [])
         instance.name = validated_data.get('name', instance.name)
         instance.description = validated_data.get('description', instance.description)
         instance.price = validated_data.get('price', instance.price)
@@ -62,16 +60,11 @@ class ProductSerializer(serializers.ModelSerializer):
         instance.user = validated_data.get('user', instance.user)
         instance.save()
 
-        # Update color_sizes
-        instance.color_sizes.clear()
-        for color_size_data in color_sizes_data:
-            color_data = color_size_data['color']
-            size_data = color_size_data['size']
+        # Update product_colors_sizes
 
-            color, created = Color.objects.get_or_create(**color_data)
-            size, created = Size.objects.get_or_create(**size_data)
-
-            color_size, created = ColorSize.objects.get_or_create(color=color, size=size)
-            instance.color_sizes.add(color_size)
+        for color_size_data in product_colors_sizes_data:
+            color = color_size_data['color']
+            size = color_size_data['size']
+            ProductColorSize.objects.create(product=instance, color=color, size=size)
 
         return instance

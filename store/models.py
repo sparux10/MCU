@@ -1,14 +1,14 @@
 from django.db import models
-from superuser.models import *
+from superuser.models import MyUser
 
 # Create your models here.
 
 class Category(models.Model):
-    name = models.CharField(max_length=200, default="",blank=False)
-    description = models.TextField(max_length=1000, default="",blank=False)
-    categoury_img = models.ImageField(upload_to='category_images/',null=True,blank=True)
-    created_at = models.DateField(auto_now_add=True)
-    user = models.ForeignKey(MyUser, null=True, on_delete=models.SET_NULL)
+    name = models.CharField(max_length=200, default="", blank=False)
+    description = models.TextField(max_length=1000, default="", blank=False)
+    category_img = models.ImageField(upload_to='category_images/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(MyUser, null=True, on_delete=models.SET_NULL, related_name='categories')
 
     def __str__(self):
         return self.name
@@ -25,13 +25,6 @@ class Size(models.Model):
     def __str__(self):
         return self.size_name
 
-class ColorSize(models.Model):
-    color = models.ForeignKey(Color, on_delete=models.CASCADE)
-    size = models.ForeignKey(Size, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return f"{self.color.color_name} - {self.size.size_name}"
-
 class Product(models.Model):
     name = models.CharField(max_length=200, default="", blank=False)
     description = models.TextField(max_length=1000, default="", blank=False)
@@ -41,10 +34,17 @@ class Product(models.Model):
     ratings = models.DecimalField(max_digits=3, decimal_places=2, default=0)
     stock = models.IntegerField(default=0)
     product_img = models.ImageField(upload_to='product_images/', null=True, blank=True)
-    category = models.ForeignKey(Category, null=True, on_delete=models.SET_NULL)
-    created_at = models.DateField(auto_now_add=True)
-    user = models.ForeignKey(MyUser, null=True, on_delete=models.SET_NULL)
-    color_sizes = models.ManyToManyField(ColorSize)  # إضافة العلاقة "many-to-many"
+    category = models.ForeignKey(Category, null=True, on_delete=models.SET_NULL, related_name='products')
+    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(MyUser, null=True, on_delete=models.SET_NULL, related_name='products')
 
     def __str__(self):
         return self.name
+    
+class ProductColorSize(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='product_colors_sizes')
+    color = models.ForeignKey(Color, null=True, on_delete=models.SET_NULL, related_name='product_colors_sizes')
+    size = models.ForeignKey(Size, null=True, on_delete=models.SET_NULL, related_name='product_colors_sizes')
+
+    def __str__(self):
+        return f"{self.color.color_name} - {self.size.size_name}"

@@ -1,6 +1,6 @@
 from django.db import models
 from superuser.models import MyUser
-from store.models import Product, ColorSize
+from store.models import *
 
 class Order(models.Model):
     user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
@@ -15,14 +15,10 @@ class OrderProduct(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
-    color_size = models.ForeignKey(ColorSize, on_delete=models.CASCADE)
+    color_size = models.ForeignKey(ProductColorSize, on_delete=models.CASCADE)
     
     def __str__(self):
         return f"Order {self.order.id} - Product {self.product.name}"
-
-
-from django.db import models
-from .models import Product, ColorSize
 
 class Cart(models.Model):
     user = models.ForeignKey(MyUser, on_delete=models.CASCADE)
@@ -37,7 +33,7 @@ class CartProduct(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
-    color_size = models.ForeignKey(ColorSize, on_delete=models.CASCADE)
+    color_size = models.ForeignKey(ProductColorSize, on_delete=models.CASCADE)
     
     def __str__(self):
         return f"Cart {self.cart.id} - Product {self.product.name}"
