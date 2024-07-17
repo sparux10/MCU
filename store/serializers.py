@@ -61,10 +61,9 @@ class ProductSerializer(serializers.ModelSerializer):
         instance.save()
 
         # Update product_colors_sizes
-
         for color_size_data in product_colors_sizes_data:
             color = color_size_data['color']
             size = color_size_data['size']
             ProductColorSize.objects.create(product=instance, color=color, size=size)
-
+        
         return instance
